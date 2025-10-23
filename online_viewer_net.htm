@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Steal a HTML</title>
+    <style>
+        body { font-family: Arial; text-align: center; padding: 20px; background: #f0f0f0; }
+        button { padding: 10px 20px; margin: 10px; cursor: pointer; }
+        #collection { margin-top: 20px; }
+        li { list-style: none; margin: 5px 0; padding: 5px; background: #fff; border-radius: 5px; }
+
+        /* Modal for base view */
+        .modal {
+            position: fixed; left:0; top:0; right:0; bottom:0;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.6); z-index: 9999;
+        }
+        .modal .card {
+            background: #fff; padding: 20px; border-radius: 8px;
+            width: 90%; max-width: 800px; max-height: 80vh; overflow: auto; text-align:left;
+        }
+        .close-btn { float:right; cursor:pointer; background:#eee; padding:4px 8px; border-radius:4px; }
+        .base-elements { display:flex; flex-wrap: wrap; gap:6px; margin-top:10px; }
+        .base-element { padding:6px; background:#fafafa; border:1px solid #ddd; border-radius:4px; cursor:pointer; }
+        #lock-base { background: yellow; }
+    </style>
+</head>
+<body>
+    <h1>Steal a HTML!</h1>
+    <p>Collect HTML elements while random thieves try to steal them!</p>
+
+    <button id="lock-base">Lock Base</button>
+    <button id="collect">Collect HTML Element</button>
+    <p>Points: <span id="points">0</span></p>
+
+    <div id="collection">
+        <h2>Your Collection:</h2>
+        <ul id="elements"></ul>
+    </div>
+
+    <div id="modal-root" style="display:none;"></div>
+
+    <script>
+        const elements = [
+            {name: "<div>", rarity: "common", points:1},
+            {name: "<p>", rarity: "common", points:1},
+            {name: "<span>", rarity: "common", points:1},
+            {name: "<a>", rarity: "uncommon", points:3},
+            {name: "<img>", rarity: "uncommon", points:3},
+            {name: "<button>", rarity: "rare", points:5},
+            {name: "<canvas>", rarity: "legendary", points:10},
+            {name: "<video>", rarity: "legendary", points:10},
+            {name: "<marquee>", rarity: "mythic", points:20},
+            {name: "<blink>", rarity: "html god", points:450},
+            {name: "<iframe>", rarity: "secret", points:1000},
+            {name: "<object>", rarity: "og", points:230000}
+        ];
+
+        const thiefNames = ["Alex","Sammy","Jordan","Taylor","Casey","Riley","Morgan","Jamie","Sky","Nova","Pip","Zed"];
+
+        const myCollection = [];
+        let points = 0;
+        let lockActive = false;
+
+        const ul = document.getElementById("elements");
+        const pointsDisplay = document.getElementById("points");
+        const modalRoot = document.getElementById("modal-root");
+        const lockBtn = document.getElementById("lock-base");
+
+        function updateCollection() {
+            ul.innerHTML = "";
+            myCollection.forEach(el => {
+                const li = document.createElement("li");
+                li.textContent = `${el.name} (${el.rarity})`;
+                ul.appendChild(li);
+            });
+        }
+
+        function addPoints(el) {
+            points += el.points;
+            pointsDisplay.textContent = points;
+        }
+
+        function createInstance(template) {
+            return {...template, dom:null};
+        }
+
+        // Collect button
+        document.getElementById("collect").addEventListener("click", ()=>{
+            let chance = Math.random();
+            let el;
+            if(chance<0.6) el=createInstance(elements[Math.floor(Math.random()*3)]);
+            else if(chance<0.85) el=createInstance(elements[Math.floor(Math.random()*2+3)]);
+            else if(chance<0.95) el=createInstance(elements[5]);
+            else if(chance<0.98) el=createInstance(elements[6+Math.floor(Math.random()*2)]);
+            else if(chance<0.99) el=createInstance(elements[8]);
+            else if(chance<0.995) el=createInstance(elements[9]);
+            else if(chance<0.9995) el=createInstance(elements[10]);
+            else el=createInstance(elements[11]);
+
+            myCollection.push(el);
+            addPoints(el);
+            alert(`You collected ${el.name} (${el.rarity})!`);
+            updateCollection();
+        });
+
+        // Lock Base button
+        lockBtn.addEventListener("click", ()=>{
+            if(lockActive) return; // already active
+            lockActive = true;
+            let time = 30;
+            lockBtn.textContent = `${time}s`;
+            const interval = setInterval(()=>{
+                time--;
+                lockBtn.textContent = `${time}s`;
+                if(time<=0){
+                    clearInterval(interval);
+                    lockBtn.textContent = "Lock Base";
+                    lockActive=false;
+                }
+            },1000);
+        });
+
+        // Random steal every 5s
+        setInterval(()=>{
+            if(myCollection.length===0) return;
+            if(lockActive) return; // prevent stealing during lock
+            if(Math.random()<0.4){
+                const idx=Math.floor(Math.random()*myCollection.length);
+                const stolen=myCollection.splice(idx,1)[0];
+                if(stolen.dom) stolen.dom.remove();
+                points-=stolen.points;
+                pointsDisplay.textContent=points;
+                const thief=thiefNames[Math.floor(Math.random()*thiefNames.length)];
+                alert(`Oh no! ${thief} stole your ${stolen.name} ("${stolen.rarity}")!`);
+                updateCollection();
+                askRevenge(thief);
+            }
+        },5000);
+
+        function askRevenge(thief){
+            if(confirm(`Do you want revenge on ${thief}?`)){
+                showThiefBase(thief);
+            }
+        }
+
+        function showThiefBase(thief){
+            modalRoot.innerHTML="";
+            modalRoot.style.display="flex";
+
+            const modal=document.createElement("div");
+            modal.className="modal";
+
+            const card=document.createElement("div");
+            card.className="card";
+
+            const closeBtn=document.createElement("div");
+            closeBtn.className="close-btn";
+            closeBtn.textContent="X";
+            closeBtn.onclick=()=>{modalRoot.style.display="none";};
+            card.appendChild(closeBtn);
+
+            const title=document.createElement("h3");
+            title.textContent=`${thief}'s Base`;
+            card.appendChild(title);
+
+            const elementsDiv=document.createElement("div");
+            elementsDiv.className="base-elements";
+
+            // generate thief's base with random elements
+            const baseElements=[];
+            for(let i=0;i<10;i++){
+                const template=elements[Math.floor(Math.random()*elements.length)];
+                baseElements.push(createInstance(template));
+            }
+
+            baseElements.forEach((el)=>{
+                const div=document.createElement("div");
+                div.className="base-element";
+                div.textContent=`${el.name} (${el.rarity})`;
+                div.onclick=()=>{
+                    const valid=Math.random()<0.5;
+                    if(valid){
+                        alert(`You successfully stole ${el.name} (${el.rarity})!`);
+                        myCollection.push(el);
+                        addPoints(el);
+                        updateCollection();
+                        div.remove();
+                    }else{
+                        alert(`Revenge backfired! You got nothing and are teleported back home.`);
+                        modalRoot.style.display="none";
+                    }
+                };
+                elementsDiv.appendChild(div);
+            });
+
+            card.appendChild(elementsDiv);
+            modal.appendChild(card);
+            modalRoot.appendChild(modal);
+        }
+
+    </script>
+</body>
+</html>
+
